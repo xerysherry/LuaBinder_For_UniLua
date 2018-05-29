@@ -1615,7 +1615,7 @@ public static partial class Wrap
 {
     public static void InitMetatable(Lua.State state)
     {",
-@"       state.register({0}.OpenLib);",
+@"        state.register({0}.OpenLib);",
 @"
     }
 }

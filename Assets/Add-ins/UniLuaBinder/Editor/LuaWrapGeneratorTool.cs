@@ -48,8 +48,8 @@ public class LuaTool : EditorWindow
         });
         LuaWrapGenerator.Create(new List<System.Type>
         {
-            typeof(Lua.Utils),
-            typeof(Lua.LuaMono),
+            typeof(LuaUtils),
+            typeof(LuaMono),
 
             // Unity Class
             typeof(UnityEngine.Animation),
