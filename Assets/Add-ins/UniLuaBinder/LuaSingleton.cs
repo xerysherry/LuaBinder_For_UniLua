@@ -18,9 +18,9 @@ namespace Lua
                 if(state_ == null)
                 {
                     state_ = new State();
-                    LuaWrap.OpenLib(state_);
+                    Wrap.OpenLib(state_);
 
-                    var script = LuaResource.Load(kStartLuaScript);
+                    var script = Lua.Resource.Load(kStartLuaScript);
                     if(!string.IsNullOrEmpty(script))
                     {
                         if(state_.dostring(script, kStartLuaScript) != Error.LUA_OK)

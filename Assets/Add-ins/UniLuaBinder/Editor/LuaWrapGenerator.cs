@@ -163,10 +163,15 @@ public class LuaWrapGenerator
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Lua;
 
+namespace Lua
+{{
 public static class {0} 
 {{",
-"}"
+@"
+}
+}"
     };
     //==========================================================================
     //create enum
@@ -179,7 +184,7 @@ public static class {0}
         var classname = GetReflectTypeName(type, "_");
         classname = classname.Split('`')[0];
         classname = classname.Replace('.', '_');
-        classname = "_Wrap_" + classname;
+        classname = "Wrap_" + classname;
 
         using(var writer = CreateFile(kGeneratedPath + classname + ".cs"))
         {
@@ -214,7 +219,7 @@ public static class {0}
         var classname = GetReflectTypeName(type, "_");
         classname = classname.Split('`')[0];
         classname = classname.Replace('.', '_');
-        classname = "_Wrap_" + classname;
+        classname = "Wrap_" + classname;
 
         Dictionary<string, List<string>> enum_tables = new Dictionary<string, List<string>>();
         Dictionary<string, List<string>> static_method_record = new Dictionary<string, List<string>>();
@@ -1604,20 +1609,21 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public static partial class LuaWrap
+namespace Lua
+{
+public static partial class Wrap
 {
     public static void InitMetatable(Lua.State state)
-    {
-        Lua.Metatable m = null;",
-@"        m = {0}.OpenLib(state);
-        if(m != null)
-            state.register(m.type, m);",
-@"    }
+    {",
+@"       state.register({0}.OpenLib);",
+@"
+    }
+}
 }"
     };
     public static void CreateWrapClassScript()
     {
-        using(var writer = CreateFile(kGeneratedPath + "_Wrap.cs"))
+        using(var writer = CreateFile(kGeneratedPath + "Wrap.cs"))
         {
             writer.WriteLine(kWrapClassScript[0]);
             for(int i = 0; i < class_list.Count; ++i)

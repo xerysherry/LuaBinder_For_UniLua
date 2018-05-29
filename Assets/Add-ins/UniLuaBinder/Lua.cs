@@ -2681,7 +2681,15 @@ namespace Lua
         //=====================================================================
         //UniLua没有完善的metatable机制，将有如下代码完成类metatable功能
 
-        public void register(System.Type type, Metatable metatable)
+        public delegate Metatable OpenLibFunc(State state);
+        public void register(OpenLibFunc openlib)
+        {
+            var metatable = openlib(this);
+            if(metatable == null)
+                return;
+            register(metatable.type, metatable);
+        }
+        void register(System.Type type, Metatable metatable)
         {
             if(metatable == null)
                 return;

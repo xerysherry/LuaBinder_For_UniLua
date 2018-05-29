@@ -20,7 +20,7 @@ public class LuaTool : EditorWindow
         }
         if(GUILayout.Button("Deploy"))
         {
-            LuaResource.Deploy();
+            Lua.Resource.Deploy();
             AssetDatabase.Refresh();
         }
     }
@@ -48,8 +48,8 @@ public class LuaTool : EditorWindow
         });
         LuaWrapGenerator.Create(new List<System.Type>
         {
-            typeof(LuaUtils),
-            typeof(LuaMono),
+            typeof(Lua.Utils),
+            typeof(Lua.LuaMono),
 
             // Unity Class
             typeof(UnityEngine.Animation),

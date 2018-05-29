@@ -2,16 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public static partial class LuaWrap
+namespace Lua
 {
-    public static void OpenLib(Lua.State state)
+    public static partial class Wrap
     {
-        var type = typeof(LuaWrap);
-        var method = type.GetMethod("InitMetatable", 
-            System.Reflection.BindingFlags.Public|
-            System.Reflection.BindingFlags.Static);
-        if(method == null)
-            return;
-        method.Invoke(null, new object[] { state });
+        public static void OpenLib(Lua.State state)
+        {
+            var type = typeof(Wrap);
+            var method = type.GetMethod("InitMetatable",
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.Static);
+            if(method == null)
+                return;
+            method.Invoke(null, new object[] { state });
+        }
     }
 }
