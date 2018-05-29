@@ -950,6 +950,9 @@ namespace Lua
         }
         public void Return(Dictionary<string, object> dict, string metatable)
         {
+            //UniLua metatable导致如此编写
+            if(!string.IsNullOrEmpty(metatable))
+                dict["__|type|__"] = metatable;
             State.Push(state, dict, metatable);
             ++return_count_;
         }
@@ -1357,7 +1360,8 @@ namespace Lua
             State.Push(state, dict);
             if(!string.IsNullOrEmpty(metatable))
             {
-                state.GetField(Constant.LUA_REGISTRYINDEX, metatable);
+                //state.GetField(Constant.LUA_REGISTRYINDEX, metatable);
+                state.GetField(Constant.LUA_REGISTRYINDEX, "__Wrap");
                 if(state.IsNil(-1))
                     state.Pop(1);
                 else
@@ -1743,6 +1747,8 @@ namespace Lua
                 case UniLua.LuaType.LUA_TLIGHTUSERDATA:
                 case UniLua.LuaType.LUA_TUSERDATA:
                     return state.ToUserData(i);
+                case UniLua.LuaType.LUA_TTABLE:
+                    return GetDictionary<string, object>(state, i);
                 case UniLua.LuaType.LUA_TNONE:
                 case UniLua.LuaType.LUA_TNIL:
                     return null;
@@ -1750,7 +1756,6 @@ namespace Lua
                 case UniLua.LuaType.LUA_TSTRING:
                 case UniLua.LuaType.LUA_TBOOLEAN:
                 case UniLua.LuaType.LUA_TUINT64:
-                case UniLua.LuaType.LUA_TTABLE:
                 case UniLua.LuaType.LUA_TFUNCTION:
                 case UniLua.LuaType.LUA_TTHREAD:
                 default:
@@ -2239,18 +2244,15 @@ namespace Lua
             state_ = UniLua.LuaAPI.NewState();
             state_.L_OpenLibs();
         }
-        public State(State state)
-        {
-            state_ = state.state_;
-        }
         public State(UniLua.ILuaState lua_state)
         {
             state_ = lua_state;
         }
-
         public State newthread()
         {
-            return new State(state_.NewThread());
+            var state = new State(state_.NewThread());
+            state.parent_ = this;
+            return state;
         }
         /// <summary>
         /// 执行文件
@@ -2547,38 +2549,39 @@ namespace Lua
             return r;
         }
 
-        void newmetatable(string name)
-        {
-            state_.NewTable();
-            state_.PushValue(-1);
-            state_.SetField(Constant.LUA_REGISTRYINDEX, name);
-        }
-
+        // UniLua没有完善的metatable机制，以下代码调用会导致__index索引异常
+        //void newmetatable(string name)
+        //{
+        //    state_.NewTable();
+        //    state_.PushValue(-1);
+        //    state_.SetField(Constant.LUA_REGISTRYINDEX, name);
+        //}
+        //
+        ///// <summary>
+        ///// 注册metatable
+        ///// </summary>
+        ///// <param name="type">metatable相关类型</param>
+        ///// <param name="tables">相关表</param>
+        ///// <param name="parent">metatable继承表</param>
+        //public void register(System.Type type, 
+        //                    Dictionary<string, Ref> tables, 
+        //                    System.Type parent = null)
+        //{
+        //    if(metatables_.Contains(type))
+        //        return;
+        //
+        //    var typename = GetTypeFullName(type);
+        //    string parentname = null;
+        //    if(parent != null && metatables_.Contains(parent))
+        //        parentname = GetTypeFullName(parent);
+        //
+        //    metatables_.Add(type);
+        //    register(typename, tables, parentname);
+        //}
         /// <summary>
-        /// 注册metatable
+        /// 注册metatable，由于UniLua无完善metatable，请勿擅自调用
         /// </summary>
-        /// <param name="type">metatable相关类型</param>
-        /// <param name="tables">相关表</param>
-        /// <param name="parent">metatable继承表</param>
-        public void register(System.Type type, 
-                            Dictionary<string, Ref> tables, 
-                            System.Type parent = null)
-        {
-            if(metatables_.Contains(type))
-                return;
-
-            var typename = GetTypeFullName(type);
-            string parentname = null;
-            if(parent != null && metatables_.Contains(parent))
-                parentname = GetTypeFullName(parent);
-
-            metatables_.Add(type);
-            register(typename, tables, parentname);
-        }
-        /// <summary>
-        /// 注册metatable
-        /// </summary>
-        public void register(string name, 
+        public void register(string name,
                             Dictionary<string, Ref> tables,
                             string parent = null)
         {
@@ -2599,7 +2602,7 @@ namespace Lua
             state_.SetField(-2, "__index");
 
             state_.PushString(name);
-            state_.PushCSharpClosure(state => 
+            state_.PushCSharpClosure(state =>
             {
                 state.PushValue(state.UpvalueIndex(1));
                 return 1;
@@ -2646,6 +2649,10 @@ namespace Lua
         int n { get { return state_.GetTop(); } }
 
         /// <summary>
+        /// 父状态机
+        /// </summary>
+        State parent_ = null;
+        /// <summary>
         /// 状态机
         /// </summary>
         public UniLua.ILuaState state { get { return state_; } }
@@ -2666,9 +2673,93 @@ namespace Lua
         /// 模块
         /// </summary>
         HashSet<Module> modules_ = new HashSet<Module>();
+        ///// <summary>
+        ///// 源表
+        ///// </summary>
+        //HashSet<System.Type> metatables_ = new HashSet<System.Type>();
+
+        //=====================================================================
+        //UniLua没有完善的metatable机制，将有如下代码完成类metatable功能
+
+        public void register(System.Type type, Metatable metatable)
+        {
+            if(metatable == null)
+                return;
+            if(metatables_ == null)
+            {
+                register("__Wrap", new Dictionary<string, Lua.Ref> {
+                    {"__index", newref(Index)},
+                });
+                metatables_ = new Dictionary<System.Type, Metatable>();
+                type_dict_ = new Dictionary<string, System.Type>();
+            }
+            metatables_[type] = metatable;
+            type_dict_[type.FullName] = type;
+        }
+        Metatable IndexMetatable(System.Type type)
+        {
+            Metatable metatable = null;
+            metatables_.TryGetValue(type, out metatable);
+            if(metatable == null)
+            {
+                if(parent_ != null)
+                    metatable = parent_.IndexMetatable(type);
+            }
+            return metatable;
+        }
+
         /// <summary>
-        /// 源表
+        /// 索引函数，替换应该在lua的索引
         /// </summary>
-        HashSet<System.Type> metatables_ = new HashSet<System.Type>();
+        /// <param name="param"></param>
+        void Index(Lua.Param param)
+        {
+            var userdata = param.GetUserdata(1);
+            var index = param.GetString(2);
+            var type = userdata.GetType();
+            if(type == typeof(Dictionary<string, object>))
+            {
+                object typename;
+                var dict = (Dictionary<string, object>)userdata;
+                dict.TryGetValue("__|type|__", out typename);
+                if(typename == null)
+                {
+                    param.Return();
+                    return;
+                }
+                System.Type other_type;
+                type_dict_.TryGetValue((string)typename, out other_type);
+                if(other_type == null)
+                {
+                    if(typename == null)
+                    {
+                        param.Return();
+                        return;
+                    }
+                }
+                type = other_type;
+            }
+
+            Metatable m = null;
+            while((m = IndexMetatable(type)) != null)
+            {
+                var r = m.Get(index);
+                if(r != null)
+                {
+                    param.Return(r);
+                    return;
+                }
+                type = m.parent;
+            }
+            param.Return();
+        }
+        /// <summary>
+        /// 各个Type绑定的对象metatable（伪）表
+        /// </summary>
+        Dictionary<System.Type, Metatable> metatables_;
+        /// <summary>
+        /// 类型字典表
+        /// </summary>
+        Dictionary<string, System.Type> type_dict_;
     }
 }

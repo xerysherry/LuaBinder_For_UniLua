@@ -33,8 +33,11 @@ public static class LuaResource
         var resources_path = Application.dataPath + "/Resources";
         var deploy_path = resources_path + kLuaScriptPath;
 
-        DirectoryInfo deploy_di = new DirectoryInfo(deploy_path);
-        deploy_di.Delete(true);
+        if(Directory.Exists(deploy_path))
+        {
+            DirectoryInfo deploy_di = new DirectoryInfo(deploy_path);
+            deploy_di.Delete(true);
+        }
 
         FileInfo[] fileinfos = null;
         DirectoryInfo di = new DirectoryInfo(debug_path);

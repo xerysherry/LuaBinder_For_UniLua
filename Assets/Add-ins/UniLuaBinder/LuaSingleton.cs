@@ -62,30 +62,36 @@ namespace Lua
         {
             state_.require(module);
         }
+
+        // UniLua没有完善的metatable机制，以下代码调用会导致__index索引异常
+        ///// <summary>
+        ///// 注册元表
+        ///// </summary>
+        ///// <param name="type"></param>
+        ///// <param name="tables"></param>
+        ///// <param name="parent"></param>
+        //public static void register(System.Type type,
+        //                            Dictionary<string, Ref> tables,
+        //                            System.Type parent = null)
+        //{
+        //    state_.register(type, tables, parent);
+        //}
+        ///// <summary>
+        ///// 注册元表
+        ///// </summary>
+        ///// <param name="name"></param>
+        ///// <param name="tables"></param>
+        ///// <param name="parent"></param>
+        //public static void register(string name,
+        //                            Dictionary<string, Ref> tables,
+        //                            string parent = null)
+        //{
+        //    state_.register(name, tables, parent);
+        //}
+
         /// <summary>
-        /// 注册元表
+        /// 状态
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="tables"></param>
-        /// <param name="parent"></param>
-        public static void register(System.Type type,
-                                    Dictionary<string, Ref> tables,
-                                    System.Type parent = null)
-        {
-            state_.register(type, tables, parent);
-        }
-        /// <summary>
-        /// 注册元表
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="tables"></param>
-        /// <param name="parent"></param>
-        public static void register(string name,
-                                    Dictionary<string, Ref> tables,
-                                    string parent = null)
-        {
-            state_.register(name, tables, parent);
-        }
         static State state_;
     }
 }

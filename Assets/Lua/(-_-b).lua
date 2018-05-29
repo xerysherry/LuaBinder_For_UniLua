@@ -15,29 +15,29 @@ ToType = LuaUtils.ToType
 GetType = LuaUtils.GetType
 
 function print(...)
-    -- local text = ""
-    -- for _, v in ipairs({...}) do
-        -- text = text .. ToString(v) .. "\t"
-    -- end
-	local text = tconcat({...})
+    local text = ""
+    for _, v in ipairs({...}) do
+        text = text .. ToString(v) .. "\t"
+    end
+	--local text = tconcat({...})
     _print(text)
 end
 
 function printError(...)
-    -- local text = ""
-    -- for _, v in ipairs({...}) do
-        -- text = text .. ToString(v) .. "\t"
-    -- end
-	local text = tconcat({...})
+    local text = ""
+    for _, v in ipairs({...}) do
+        text = text .. ToString(v) .. "\t"
+    end
+	--local text = tconcat({...})
     LogError(text)
 end
 
 function printWarning(...)
-    -- local text = ""
-    -- for _, v in ipairs({...}) do
-        -- text = text .. ToString(v) .. "\t"
-    -- end
-	local text = tconcat({...})
+    local text = ""
+    for _, v in ipairs({...}) do
+        text = text .. ToString(v) .. "\t"
+    end
+	--local text = tconcat({...})
     LogWarning(text)
 end
 

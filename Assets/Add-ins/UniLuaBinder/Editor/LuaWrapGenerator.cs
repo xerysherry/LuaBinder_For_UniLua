@@ -1309,9 +1309,23 @@ public static class {0}
     {
         if(type.IsValueType && !type.IsEnum && !IsBaseType(type))
         {
-            var fs = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fs = type.GetFields(BindingFlags.Public | BindingFlags.Instance |
+                    BindingFlags.GetField | BindingFlags.SetField);
             foreach(var f in fs)
                 WriteStructUpdate(index, f.Name, param, f.FieldType);
+            var ps = type.GetProperties(BindingFlags.Public | BindingFlags.Instance |
+                    BindingFlags.GetProperty | BindingFlags.SetProperty);
+            foreach(var p in ps)
+            {
+                if(!p.CanRead)
+                    continue;
+                if(p.Name == "Item")
+                    continue;
+                var attribs = p.GetCustomAttributes(typeof(ObsoleteAttribute), true);
+                if(attribs != null && attribs.Length > 0)
+                    continue;
+                WriteStructUpdate(index, p.Name, param, p.PropertyType);
+            }
         }
     }
 
@@ -1594,14 +1608,10 @@ public static partial class LuaWrap
 {
     public static void InitMetatable(Lua.State state)
     {
-        metatables = new Dictionary<System.Type, Lua.Metatable>();
-        state.register(""__Wrap"", new Dictionary<string, Lua.Ref> {
-            {""__index"", state.newref(Index)},
-        });
         Lua.Metatable m = null;",
 @"        m = {0}.OpenLib(state);
         if(m != null)
-            metatables.Add(m.type, m);",
+            state.register(m.type, m);",
 @"    }
 }"
     };
